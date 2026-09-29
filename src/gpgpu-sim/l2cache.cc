@@ -1027,6 +1027,8 @@ void memory_sub_partition::push(mem_fetch *m_req, unsigned long long cycle) {
       mem_fetch *req = reqs[i];
       m_request_tracker.insert(req);
       trace_l2_event("REQ", cycle, m_id, req, "ICNT_TO_L2");
+      // trace_l2_event 输出一条跟踪日志，
+      // 标记该请求处于 ICNT_TO_L2（从互连网络进入 L2）阶段。
       const unsigned extra_latency = l2_partition_extra_latency(req);
       if (extra_latency > 0) {
         m_l2_partition_remote_accesses++;
