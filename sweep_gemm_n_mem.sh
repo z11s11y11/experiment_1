@@ -7,6 +7,8 @@ REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 CONFIG="${REPO_ROOT}/configs/SM90_H100/gpgpusim.config"
 RUN_SCRIPT="${REPO_ROOT}/tutorials/triton-gemm/run.sh"
 SIM_LOG="${REPO_ROOT}/tutorials/triton-gemm/run/simulation.log"
+LOG_DIR="${REPO_ROOT}/sim_logs"          # ← 新增：每配置的完整日志存这里
+mkdir -p -- "${LOG_DIR}"                 # ← 新增
 RESULT_CSV="${REPO_ROOT}/n_mem_results.csv"
 RESULT_MD="${REPO_ROOT}/reslut.md"
 TMP_DIR="$(mktemp -d)"
@@ -40,8 +42,8 @@ for multiplier in {5..15}; do
     $1 == "-gpgpu_n_mem" { print "-gpgpu_n_mem " n_mem; next }
     { print }
   ' "${TMP_DIR}/original.config" > "${TMP_DIR}/next.config"
+  # 2) ★ 必须写回真正被读取的配置文件 ★
   cp -- "${TMP_DIR}/next.config" "${CONFIG}"
-
   # 每次跑2次仿真
   row="${n_mem}"
   total=0
@@ -53,6 +55,7 @@ for multiplier in {5..15}; do
       exit 1
     fi
 
+    cp -- "${SIM_LOG}" "${LOG_DIR}/simulation_n${n_mem}_run${run}.log"   # ← 新增
     cycles="$(awk '$1 == "gpu_tot_sim_cycle" && $2 == "=" { print $3; exit }' "${SIM_LOG}")"
     if [[ ! "${cycles}" =~ ^[0-9]+$ ]]; then
       echo "Missing or invalid gpu_tot_sim_cycle for -gpgpu_n_mem=${n_mem}, repetition ${run}." >&2
