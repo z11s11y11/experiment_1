@@ -437,8 +437,10 @@ void memory_partition_unit::simple_dram_model_cycle() {
           spid);
       dram_delay_t d;
       d.req = mf;
+      // dram_latency_queue
       d.ready_cycle = m_gpu->gpu_sim_cycle + m_gpu->gpu_tot_sim_cycle +
                       m_config->dram_latency;
+      // 当前这一轮/当前 kernel 仿真已经执行的 cycle 数+之前已经完成的仿真累计 cycle 数+一个内存请求从 L2→DRAM 队列出来之后，在真正允许进入详细 DRAM 模型之前，需要额外经历的固定延迟
       m_dram_latency_queue.push_back(d);
       mf->set_status(IN_PARTITION_DRAM_LATENCY_QUEUE,
                      m_gpu->gpu_sim_cycle + m_gpu->gpu_tot_sim_cycle);
@@ -590,6 +592,7 @@ memory_sub_partition::memory_sub_partition(unsigned sub_partition_id,
                              m_L2interface, m_mf_allocator,
                              IN_PARTITION_L2_MISS_QUEUE, gpu, L2_GPU_CACHE);
 
+  //队列创建  
   unsigned int icnt_L2;
   unsigned int L2_dram;
   unsigned int dram_L2;
@@ -1019,9 +1022,9 @@ void memory_sub_partition::push(mem_fetch *m_req, unsigned long long cycle) {
     m_mem_stats->get_stats()->memlatstat_icnt2mem_pop(m_req);
     std::vector<mem_fetch *> reqs;
     if (m_config->m_L2_config.m_cache_type == SECTOR)
-      reqs = breakdown_request_to_sector_requests(m_req);
+      reqs = breakdown_request_to_sector_requests(m_req); // 拆成 32B sector 请求
     else
-      reqs.push_back(m_req);
+      reqs.push_back(m_req);  // 原样放入（≤128B 整个事务）
 
     for (unsigned i = 0; i < reqs.size(); ++i) {
       mem_fetch *req = reqs[i];

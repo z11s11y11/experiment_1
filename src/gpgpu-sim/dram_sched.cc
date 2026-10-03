@@ -53,13 +53,23 @@ frfcfs_scheduler::frfcfs_scheduler(const memory_config *config, dram_t *dm,
     curr_row_service_time[i] = 0;
     row_service_timestamp[i] = 0;
   }
+  // 如果开启了独立的写通道
+  // m_config->seperate_write_queue_enabled参数为src/gpgpu-sim/gpu-sim.cc 353行
   if (m_config->seperate_write_queue_enabled) {
+    // 写队列
+    // m_config->nbk：DRAM 的 bank 数量（number of banks），构建每一个写请求的列表
+    // m_config->nbk 它告诉内存控制器，“你有多少个可以并行操作的独立存储单元（Bank）
     m_write_queue = new std::list<dram_req_t *>[m_config->nbk];
+    // row id
+    // DRAM 访问同一个已经打开的 Row 通常比切换到另一个 Row 更高效，因此 scheduler 会倾向于寻找 row hit。
     m_write_bins = new std::map<
         unsigned, std::list<std::list<dram_req_t *>::iterator> >[m_config->nbk];
+    // 记录该 Bank 最近/当前关注的写 Row 对应的请求集合
     m_last_write_row =
         new std::list<std::list<dram_req_t *>::iterator> *[m_config->nbk];
+    // dram_req_t src/gpgpu-sim/dram.h 52~69行
 
+    // 逐个 Bank 初始化。
     for (unsigned i = 0; i < m_config->nbk; i++) {
       m_write_queue[i].clear();
       m_write_bins[i].clear();

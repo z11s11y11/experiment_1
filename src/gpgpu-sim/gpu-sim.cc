@@ -348,9 +348,11 @@ void memory_config::reg_options(class OptionParser *opp) {
                          "dram_bnkgrp_indexing_policy (0 = take higher bits, 1 "
                          "= take lower bits) (Default = 0)",
                          "0");
+  // Dram 写队列开关：  
   option_parser_register(opp, "-dram_seperate_write_queue_enable", OPT_BOOL,
                          &seperate_write_queue_enabled,
                          "Seperate_Write_Queue_Enable", "0");
+  // Dram 写队列配置
   option_parser_register(opp, "-dram_write_queue_size", OPT_CSTR,
                          &write_queue_size_opt, "Write_Queue_Size", "32:28:16");
   option_parser_register(
